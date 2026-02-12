@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Settle in France — Packages</title>
+  <link rel="stylesheet" href="styles.css?v=1" />
+</head>
+
+<body id="top">
+
+  <header class="topbar">
+    <div class="container topbar__inner">
+
+      <div class="brand">
+        <div class="brand__mark" aria-hidden="true">SF</div>
+        <div class="brand__text">
+          <div class="brand__name">Settle in France</div>
+          <div class="brand__tag" data-i18n="brand_tag_packages">Choose your support package</div>
+        </div>
+      </div>
+
+      <div class="lang">
+        <button class="lang__btn" type="button" onclick="setLang('en')" id="langEn">EN</button>
+        <button class="lang__btn" type="button" onclick="setLang('es')" id="langEs">ES</button>
+      </div>
+
+    </div>
+  </header>
+
+  <main>
+    <section class="section section--soft" id="packages">
+      <div class="container">
+        <div class="section__head">
+          <h2 data-i18n="p2_title">Packages</h2>
+          <p class="muted" data-i18n="p2_sub">Select one to continue to the pricing question.</p>
+        </div>
+
+        <div class="pricing">
+          <div class="price-card">
+            <div class="price-card__head">
+              <h3 data-i18n="basic">Basic</h3>
+              <div class="price-range">€15–€30<span>/month</span></div>
+            </div>
+
+            <ul class="bullets">
+              <li data-i18n="basic_b1">Step-by-step roadmap</li>
+              <li data-i18n="basic_b2">Document repository</li>
+              <li data-i18n="basic_b3">Deadline reminders + tracking</li>
+              <li data-i18n="basic_b4">Templates and checklists</li>
+            </ul>
+
+            <button class="btn btn--secondary btn--full" type="button" onclick="selectPackage('basic')">
+              <span data-i18n="select_basic">Select Basic</span>
+            </button>
+          </div>
+
+          <div class="price-card price-card--highlight">
+            <div class="price-card__head">
+              <h3 data-i18n="complete">Complete</h3>
+              <div class="price-range">€60–€120<span>/month</span></div>
+            </div>
+
+            <ul class="bullets">
+              <li data-i18n="complete_b1">Everything in Basic</li>
+              <li data-i18n="complete_b2">Pre-filled forms (where applicable)</li>
+              <li data-i18n="complete_b3">Expert validation (human-in-the-loop)</li>
+              <li data-i18n="complete_b4">Aid eligibility checklist</li>
+              <li data-i18n="complete_b5">Priority support workflow</li>
+            </ul>
+
+            <button class="btn btn--primary btn--full" type="button" onclick="selectPackage('complete')">
+              <span data-i18n="select_complete">Select Complete</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://oljeghivxtdfnlgqqrlt.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_mV8zSvwppl_cHDDVp3q4PA_qfA65R5F";
+
+    const SESSION_KEY = "sf_session_id_v1";
+    const LANG_KEY = "sf_lang_v1";
+    const SELECTED_KEY = "sf_selected_package_v1";
+
+    function getSessionId() {
+      let id = localStorage.getItem(SESSION_KEY);
+      if (!id) { id = crypto.randomUUID(); localStorage.setItem(SESSION_KEY, id); }
+      return id;
+    }
+    function getLang() { return localStorage.getItem(LANG_KEY) || "en"; }
+
+    async function supabaseInsertEvent(event_type, payload = {}) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/sif_events`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify({
+          session_id: getSessionId(),
+          event_type,
+          page: window.location.pathname,
+          lang: getLang(),
+          payload
+        })
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        console.warn("Supabase insert failed:", res.status, txt);
+      }
+    }
+
+    async function selectPackage(pkg) {
+      localStorage.setItem(SELECTED_KEY, pkg);
+      await supabaseInsertEvent("phase2_package_selected", { selectedPackage: pkg });
+      window.location.href = "wtp.html";
+    }
+  </script>
+
+  <!-- i18n (same as index) -->
+  <script>
+    const I18N = {
+		en: {
+        brand_tag_index: "Administrative support for international students",
+        brand_tag_packages: "Choose your support package",
+        brand_tag_wtp: "Pricing preference",
+
+        p1_title: "Do you want support as a bundle?",
+        p1_sub: "If you choose “Yes”, you’ll see our packages. If “No”, we’ll note your preference.",
+        p1_yes: "Yes — bundle support",
+        p1_no: "No — individual procedures",
+        p1_continue: "Continue",
+        p1_thanks: "Thanks for your answer.",
+
+        p2_title: "Packages",
+        p2_sub: "Select one to continue to the pricing question.",
+        basic: "Basic",
+        complete: "Complete",
+        select_basic: "Select Basic",
+        select_complete: "Select Complete",
+
+        basic_b1: "Step-by-step roadmap",
+        basic_b2: "Document repository",
+        basic_b3: "Deadline reminders + tracking",
+        basic_b4: "Templates and checklists",
+
+        complete_b1: "Everything in Basic",
+        complete_b2: "Pre-filled forms (where applicable)",
+        complete_b3: "Expert validation (human-in-the-loop)",
+        complete_b4: "Aid eligibility checklist",
+        complete_b5: "Priority support workflow",
+
+        p3_title_basic: "How much would you pay for the Basic package?",
+        p3_title_complete: "How much would you pay for the Complete package?",
+        p3_sub: "Select an amount within the range for your chosen package.",
+        p3_label: "Your monthly price",
+        p3_placeholder: "Select an amount",
+        p3_submit: "Submit",
+        p3_thanks: "Thanks — your response has been recorded.",
+        allowed_range: "Allowed range: "
+      },
+      es: {
+        brand_tag_index: "Apoyo administrativo para estudiantes internacionales",
+        brand_tag_packages: "Elige tu paquete de apoyo",
+        brand_tag_wtp: "Preferencia de precio",
+
+        p1_title: "¿Quieres apoyo en un paquete?",
+        p1_sub: "Si eliges “Sí”, verás nuestros paquetes. Si eliges “No”, registraremos tu preferencia.",
+        p1_yes: "Sí — apoyo en paquete",
+        p1_no: "No — trámites individuales",
+        p1_continue: "Continuar",
+        p1_thanks: "Gracias por tu respuesta.",
+
+        p2_title: "Paquetes",
+        p2_sub: "Elige uno para continuar con la pregunta de precio.",
+        basic: "Básico",
+        complete: "Completo",
+        select_basic: "Elegir Básico",
+        select_complete: "Elegir Completo",
+
+        basic_b1: "Guía paso a paso",
+        basic_b2: "Repositorio de documentos",
+        basic_b3: "Recordatorios de plazos + seguimiento",
+        basic_b4: "Plantillas y listas de verificación",
+
+        complete_b1: "Todo lo incluido en Básico",
+        complete_b2: "Formularios pre-rellenados (cuando aplique)",
+        complete_b3: "Validación experta (revisión humana)",
+        complete_b4: "Checklist de ayudas y elegibilidad",
+        complete_b5: "Soporte prioritario",
+
+        p3_title_basic: "¿Cuánto pagarías por el paquete Básico?",
+        p3_title_complete: "¿Cuánto pagarías por el paquete Completo?",
+        p3_sub: "Selecciona un importe dentro del rango de tu paquete elegido.",
+        p3_label: "Tu precio mensual",
+        p3_placeholder: "Selecciona un importe",
+        p3_submit: "Enviar",
+        p3_thanks: "Gracias — tu respuesta ha sido registrada.",
+        allowed_range: "Rango permitido: "
+      }
+	};
+    function setLang(lang){ localStorage.setItem("sf_lang_v1", lang); applyLang(lang); }
+    function getLangLocal(){ return localStorage.getItem("sf_lang_v1") || "en"; }
+    function t(key){ const lang = getLangLocal(); return (I18N[lang] && I18N[lang][key]) ? I18N[lang][key] : key; }
+    function applyLang(lang){
+      const enBtn = document.getElementById("langEn");
+      const esBtn = document.getElementById("langEs");
+      if (enBtn && esBtn) { enBtn.classList.toggle("is-active", lang === "en"); esBtn.classList.toggle("is-active", lang === "es"); }
+      document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent = t(el.getAttribute("data-i18n")); });
+      if (typeof refreshDynamicTexts === "function") refreshDynamicTexts();
+    }
+    /* IMPORTANT: paste the full I18N object from index.html here */
+    applyLang(getLangLocal());
+  </script>
+
+</body>
+</html>
