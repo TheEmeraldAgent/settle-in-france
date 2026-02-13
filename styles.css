@@ -410,3 +410,22 @@ main{
   color: var(--text);
 }
 
+.hero {
+  padding: 60px 20px 20px;
+  text-align: center;
+}
+
+.hero__title {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.hero__subtitle {
+  font-size: 18px;
+  color: #5f6c7b;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
