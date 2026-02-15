@@ -61,9 +61,26 @@
     const LANG_KEY = "sf_lang_v1";
     const SELECTED_KEY = "sf_selected_package_v1";
 
+    // We intentionally use *range buckets* (instead of many single-price options)
+    // to keep the form simple and avoid "too many different prices".
+    // Each option stores a midpoint value for analytics + min/max for context.
     const PACKAGE_RANGES = {
-      basic:   { min: 15, max: 30, step: 1, label: "€15–€30 / month" },
-      complete:{ min: 60, max: 120, step: 5, label: "€60–€120 / month" }
+      basic: {
+        label: "€15–€20, €20–€25, €25–€30 / month",
+        tiers: [
+          { min: 15, max: 20, mid: 18 },
+          { min: 20, max: 25, mid: 23 },
+          { min: 25, max: 30, mid: 28 }
+        ]
+      },
+      complete: {
+        label: "€60–€80, €80–€100, €100–€120 / month",
+        tiers: [
+          { min: 60, max: 80, mid: 70 },
+          { min: 80, max: 100, mid: 90 },
+          { min: 100, max: 120, mid: 110 }
+        ]
+      }
     };
 
     function getSessionId() {
@@ -109,12 +126,16 @@
       sel.appendChild(placeholder);
 
       const pkg = PACKAGE_RANGES[pkgKey];
-      for (let v = pkg.min; v <= pkg.max; v += pkg.step) {
+
+      // Range-bucket options
+      pkg.tiers.forEach(tier => {
         const opt = document.createElement("option");
-        opt.value = String(v);
-        opt.textContent = `€${v} / month`;
+        opt.value = String(tier.mid);
+        opt.dataset.min = String(tier.min);
+        opt.dataset.max = String(tier.max);
+        opt.textContent = `€${tier.min}–€${tier.max} / month`;
         sel.appendChild(opt);
-      }
+      });
     }
 
     function refreshDynamicTexts() {
@@ -141,16 +162,24 @@
 
     async function submitWtp() {
       const pkgKey = localStorage.getItem(SELECTED_KEY);
-      const wtp = document.getElementById("wtpValue")?.value || null;
+      const sel = document.getElementById("wtpValue");
+      const wtpMid = sel?.value || null;
 
-      if (!wtp) {
+      const selectedOpt = sel?.selectedOptions?.[0] || null;
+      const wtpMin = selectedOpt?.dataset?.min ? Number(selectedOpt.dataset.min) : null;
+      const wtpMax = selectedOpt?.dataset?.max ? Number(selectedOpt.dataset.max) : null;
+
+      if (!wtpMid) {
         alert("Please select an amount.");
         return;
       }
 
       await supabaseInsertEvent("phase3_wtp_submit", {
         selectedPackage: pkgKey,
-        willingnessToPayEUR: Number(wtp)
+        // midpoint for analytics/aggregation
+        willingnessToPayEUR: Number(wtpMid),
+        // bucket context (what the user actually selected)
+        willingnessToPayRangeEUR: (wtpMin != null && wtpMax != null) ? { min: wtpMin, max: wtpMax } : null
       });
 
       document.getElementById("thanksBox").hidden = false;
