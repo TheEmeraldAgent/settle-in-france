@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Settle in France — Quick question</title>
-  <link rel="stylesheet" href="styles.css?v=1" />
+  <link rel="stylesheet" href="styles.css?v=3" />
 </head>
 
 <body id="top">
@@ -29,29 +29,35 @@
   </header>
 
   <main>
-	<section class="hero">
-		<div class="container narrow">
-			<h1 class="hero__title" data-i18n="hero_title">
-			All your French administrative procedures — handled in one structured system.
-			</h1>
-		<p class="hero__subtitle" data-i18n="hero_subtitle">
-		From housing documents to CAF, banking, and university formalities,
-		our bundle combines guidance, tools, and expert validation in a single coordinated support package.
-		</p>
-		</div>
-	</section>
+    <section class="hero">
+      <div class="container narrow">
+        <h1 class="hero__title" data-i18n="hero_title">
+          All your French administrative procedures — handled in one structured system.
+        </h1>
+
+        <p class="hero__subtitle" data-i18n="hero_subtitle">
+          From housing documents to CAF, banking, and university formalities,
+          our bundle combines guidance, tools, and expert validation in a single coordinated support package.
+        </p>
+      </div>
+    </section>
 
     <section class="section">
       <div class="container narrow">
         <div class="card card--center">
 
-          <h1 class="h1" data-i18n="p1_title">Would you be interested in having all these services handled in one single package?</h1>
-          <p class="muted" data-i18n="p1_sub">If you choose “Yes”, you’ll see our packages. If “No”, we’ll note your preference.</p>
+          <h1 class="h1" data-i18n="p1_title">
+            Would you be interested in having all these services handled in one single package?
+          </h1>
+
+          <p class="muted" data-i18n="p1_sub">
+            If you choose “Yes”, you’ll see our packages. If “No”, we’ll note your preference.
+          </p>
 
           <div class="yesno">
             <label class="radio">
               <input type="radio" name="bundle" value="yes" />
-              <span data-i18n="p1_yes">Yes - I'd get "All-in-one" bundle support</span>
+              <span data-i18n="p1_yes">Yes - I'd get “All-in-one” bundle support</span>
             </label>
 
             <label class="radio">
@@ -71,13 +77,45 @@
     </section>
   </main>
 
-  <!-- ===== Supabase logging (shared) ===== -->
   <script>
+    /* ============================
+       CONFIG
+    ============================ */
+
     const SUPABASE_URL = "https://oljeghivxtdfnlgqqrlt.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_mV8zSvwppl_cHDDVp3q4PA_qfA65R5F";
 
     const SESSION_KEY = "sf_session_id_v1";
     const LANG_KEY = "sf_lang_v1";
+
+    const I18N = {
+      en: {
+        brand_tag_index: "Administrative support for international students",
+        hero_title: "All your French administrative procedures — handled in one structured system.",
+        hero_subtitle: "From housing documents to CAF, banking, and university formalities, our bundle combines guidance, tools, and expert validation in a single coordinated support package.",
+        p1_title: "Would you be interested in having all these services handled in one single package?",
+        p1_sub: "If you choose “Yes”, you’ll see our packages. If “No”, we’ll note your preference.",
+        p1_yes: "Yes - I'd get “All-in-one” bundle support",
+        p1_no: "No - I'd rather manage each process separately on my own",
+        p1_continue: "Continue",
+        p1_thanks: "Thanks for your answer."
+      },
+      es: {
+        brand_tag_index: "Apoyo administrativo para estudiantes internacionales",
+        hero_title: "Todos tus trámites administrativos en Francia — organizados en un sistema estructurado.",
+        hero_subtitle: "Desde documentos de vivienda hasta CAF, banca y formalidades universitarias, nuestro paquete combina orientación, herramientas y validación experta en un único sistema coordinado.",
+        p1_title: "¿Te gustaría contratar todos estos servicios en un solo paquete?",
+        p1_sub: "Si eliges “Sí”, verás nuestros paquetes. Si eliges “No”, registraremos tu preferencia.",
+        p1_yes: "Sí - contrataría todo en un mismo paquete",
+        p1_no: "No - prefiero tramitar yo mismo/a cada cosa por separado",
+        p1_continue: "Continuar",
+        p1_thanks: "Gracias por tu respuesta."
+      }
+    };
+
+    /* ============================
+       SESSION + LOGGING
+    ============================ */
 
     function getSessionId() {
       let id = localStorage.getItem(SESSION_KEY);
@@ -104,7 +142,7 @@
         body: JSON.stringify({
           session_id: getSessionId(),
           event_type,
-          page: window.location.pathname,
+          page: "index",
           lang: getLang(),
           payload
         })
@@ -116,8 +154,42 @@
       }
     }
 
+    /* ============================
+       I18N
+    ============================ */
+
+    function t(key) {
+      const lang = getLang();
+      return (I18N[lang] && I18N[lang][key]) ? I18N[lang][key] : key;
+    }
+
+    function setLang(lang) {
+      localStorage.setItem(LANG_KEY, lang);
+      applyLang();
+    }
+
+    function applyLang() {
+      const lang = getLang();
+
+      const enBtn = document.getElementById("langEn");
+      const esBtn = document.getElementById("langEs");
+      if (enBtn && esBtn) {
+        enBtn.classList.toggle("is-active", lang === "en");
+        esBtn.classList.toggle("is-active", lang === "es");
+      }
+
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        el.textContent = t(el.getAttribute("data-i18n"));
+      });
+    }
+
+    /* ============================
+       PAGE LOGIC
+    ============================ */
+
     async function submitPhase1() {
       const choice = document.querySelector('input[name="bundle"]:checked')?.value || null;
+
       if (!choice) {
         alert("Please select Yes or No.");
         return;
@@ -131,132 +203,10 @@
         document.getElementById("thanksBox").hidden = false;
       }
     }
-  </script>
 
-  <!-- ===== i18n (EN/ES) ===== -->
-  <script>
-    const I18N = {
-      en: {
-        brand_tag_index: "Administrative support for international students",
-        brand_tag_packages: "Choose your support package",
-        brand_tag_wtp: "Pricing preference",
-		
-		hero_title: "All your French administrative procedures — handled in one structured system.",
-
-		hero_subtitle: "From housing documents to CAF, banking, and university formalities, our bundle combines guidance, tools, and expert validation in a single coordinated support package.",
-
-
-        p1_title: "Would you be interested in having all these services handled in one single package?",
-        p1_sub: "If you choose “Yes”, you’ll see our packages. If “No”, we’ll note your preference.",
-        p1_yes: "Yes - I'd get "All-in-one" bundle support",
-        p1_no: "No - I'd rather manage each process separately on my own",
-        p1_continue: "Continue",
-        p1_thanks: "Thanks for your answer.",
-
-        p2_title: "Packages",
-        p2_sub: "Select one to continue to the pricing question.",
-        basic: "Basic",
-        complete: "Complete",
-        select_basic: "Select Basic",
-        select_complete: "Select Complete",
-
-        basic_b1: "Step-by-step roadmap",
-        basic_b2: "Document repository",
-        basic_b3: "Deadline reminders + tracking",
-        basic_b4: "Templates and checklists",
-
-        complete_b1: "Everything in Basic",
-        complete_b2: "Pre-filled forms (where applicable)",
-        complete_b3: "Expert validation (human-in-the-loop)",
-        complete_b4: "Aid eligibility checklist",
-        complete_b5: "Priority support workflow",
-
-        p3_title_basic: "How much would you pay for the Basic package?",
-        p3_title_complete: "How much would you pay for the Complete package?",
-        p3_sub: "Select an amount within the range for your chosen package.",
-        p3_label: "Your monthly price",
-        p3_placeholder: "Select an amount",
-        p3_submit: "Submit",
-        p3_thanks: "Thanks — your response has been recorded.",
-        allowed_range: "Allowed range: "
-      },
-      es: {
-        brand_tag_index: "Apoyo administrativo para estudiantes internacionales",
-        brand_tag_packages: "Elige tu paquete de apoyo",
-        brand_tag_wtp: "Preferencia de precio",
-		
-		hero_title: "Todos tus trámites administrativos en Francia — organizados en un sistema estructurado.",
-
-		hero_subtitle: "Desde documentos de vivienda hasta CAF, banca y formalidades universitarias, nuestro paquete combina orientación, herramientas y validación experta en un único sistema coordinado.",
-
-
-        p1_title: "¿Te gustaría contratar todos estos servicios en un solo paquete?",
-        p1_sub: "Si eliges “Sí”, verás nuestros paquetes. Si eliges “No”, registraremos tu preferencia.",
-        p1_yes: "Sí - contrataría todo en un mismo paquete",
-        p1_no: "No - prefiero tramitar yo mismo/a cada cosa por separado",
-        p1_continue: "Continuar",
-        p1_thanks: "Gracias por tu respuesta.",
-
-        p2_title: "Paquetes",
-        p2_sub: "Elige uno para continuar valorando tu preferencia en precios y tiempo.",
-        basic: "Básico",
-        complete: "Completo",
-        select_basic: "Elegir Básico",
-        select_complete: "Elegir Completo",
-
-        basic_b1: "Guía paso a paso",
-        basic_b2: "Repositorio de documentos",
-        basic_b3: "Recordatorios de plazos + seguimiento",
-        basic_b4: "Plantillas y listas de verificación",
-
-        complete_b1: "Todo lo incluido en Básico",
-        complete_b2: "Formularios pre-rellenados (cuando aplique)",
-        complete_b3: "Validación experta (revisión humana)",
-        complete_b4: "Checklist de ayudas y elegibilidad",
-        complete_b5: "Soporte prioritario",
-
-        p3_title_basic: "¿Cuánto pagarías por el paquete Básico?",
-        p3_title_complete: "¿Cuánto pagarías por el paquete Completo?",
-        p3_sub: "Selecciona un importe dentro del rango de tu paquete elegido.",
-        p3_label: "Tu precio mensual",
-        p3_placeholder: "Selecciona un importe",
-        p3_submit: "Enviar",
-        p3_thanks: "Gracias — tu respuesta ha sido registrada.",
-        allowed_range: "Rango permitido: "
-      }
-    };
-
-    function setLang(lang){
-      localStorage.setItem("sf_lang_v1", lang);
-      applyLang(lang);
-    }
-    function getLangLocal(){
-      return localStorage.getItem("sf_lang_v1") || "en";
-    }
-    function t(key){
-      const lang = getLangLocal();
-      return (I18N[lang] && I18N[lang][key]) ? I18N[lang][key] : key;
-    }
-
-    function applyLang(lang){
-      const enBtn = document.getElementById("langEn");
-      const esBtn = document.getElementById("langEs");
-      if (enBtn && esBtn) {
-        enBtn.classList.toggle("is-active", lang === "en");
-        esBtn.classList.toggle("is-active", lang === "es");
-      }
-      document.querySelectorAll("[data-i18n]").forEach(el=>{
-        el.textContent = t(el.getAttribute("data-i18n"));
-      });
-      if (typeof refreshDynamicTexts === "function") refreshDynamicTexts();
-    }
-
-    applyLang(getLangLocal());
+    // init
+    applyLang();
   </script>
 
 </body>
 </html>
-
-
-
-

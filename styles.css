@@ -436,3 +436,21 @@ main{
 
 
 
+
+
+/* Active language indicator (small dot) */
+.lang__btn.is-active{
+  position: relative;
+}
+.lang__btn.is-active::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:4px;
+  transform:translateX(-50%);
+  width:6px;
+  height:6px;
+  border-radius:999px;
+  background: currentColor;
+  opacity: 0.55;
+}
