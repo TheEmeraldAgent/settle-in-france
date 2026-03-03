@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Settle in France — Packages</title>
-  <link rel="stylesheet" href="styles.css?v=3" />
+  <link rel="stylesheet" href="styles.css?v=4" />
 </head>
 
 <body id="top">
@@ -39,6 +39,7 @@
 
       <div class="pricing">
 
+        <!-- BASIC -->
         <div class="price-card">
           <div class="price-card__head">
             <h3 data-i18n="basic">Basic</h3>
@@ -57,6 +58,7 @@
           </button>
         </div>
 
+        <!-- COMPLETE -->
         <div class="price-card price-card--highlight">
           <div class="price-card__head">
             <h3 data-i18n="complete">Complete</h3>
@@ -65,8 +67,8 @@
 
           <ul class="bullets">
             <li data-i18n="complete_b1">Everything in Basic</li>
-            <li data-i18n="complete_b2">Pre-filled forms</li>
-            <li data-i18n="complete_b3">Expert validation</li>
+            <li data-i18n="complete_b2">Pre-filled forms (where applicable)</li>
+            <li data-i18n="complete_b3">Expert validation (human-in-the-loop)</li>
             <li data-i18n="complete_b4">Aid eligibility checklist</li>
             <li data-i18n="complete_b5">Priority support workflow</li>
           </ul>
@@ -83,16 +85,52 @@
 </main>
 
 <script>
-  /* ============================
-     CONFIG
-  ============================ */
-
   const SUPABASE_URL = "https://oljeghivxtdfnlgqqrlt.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_mV8zSvwppl_cHDDVp3q4PA_qfA65R5F";
 
   const SESSION_KEY = "sf_session_id_v1";
   const LANG_KEY = "sf_lang_v1";
   const SELECTED_KEY = "sf_selected_package_v1";
+
+  function getSessionId() {
+    let id = localStorage.getItem(SESSION_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(SESSION_KEY, id);
+    }
+    return id;
+  }
+
+  function getLang() {
+    return localStorage.getItem(LANG_KEY) || "en";
+  }
+
+  async function supabaseInsertEvent(event_type, payload = {}) {
+    await fetch(`${SUPABASE_URL}/rest/v1/sif_events`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Prefer": "return=minimal"
+      },
+      body: JSON.stringify({
+        session_id: getSessionId(),
+        event_type,
+        page: "packages",
+        lang: getLang(),
+        payload
+      })
+    });
+  }
+
+  async function selectPackage(pkg) {
+    localStorage.setItem(SELECTED_KEY, pkg);
+
+    await supabaseInsertEvent("phase2_package_selected", { selectedPackage: pkg });
+
+    window.location.href = "wtp.html";
+  }
 
   const I18N = {
     en: {
@@ -111,120 +149,55 @@
       complete: "Complete",
       complete_timeframe: "Fully accompanied — completed within 2 months",
       complete_b1: "Everything in Basic",
-      complete_b2: "Pre-filled forms",
-      complete_b3: "Expert validation",
+      complete_b2: "Pre-filled forms (where applicable)",
+      complete_b3: "Expert validation (human-in-the-loop)",
       complete_b4: "Aid eligibility checklist",
       complete_b5: "Priority support workflow",
       select_complete: "Select Complete"
     },
+
     es: {
       brand_tag_packages: "Elige tu paquete de soporte",
       p2_title: "Paquetes",
-      p2_sub: "Elige uno para continuar valorando tu preferencia en precios y tiempo.",
+      p2_sub: "Selecciona uno para continuar con la pregunta de precio.",
 
       basic: "Básico",
-      basic_timeframe: "Recibe la guía necesaria para que vayas a tu propio ritmo",
+      basic_timeframe: "Soporte a tu propio ritmo",
       basic_b1: "Guía paso a paso",
       basic_b2: "Repositorio de documentos",
       basic_b3: "Recordatorios y seguimiento de plazos",
       basic_b4: "Plantillas y listas de verificación",
-      select_basic: "Elegir Básico",
+      select_basic: "Seleccionar Básico",
 
       complete: "Completo",
-      complete_timeframe: "Recibe acompañamiento completo y ten todo listo en un rango de 2 meses",
+      complete_timeframe: "Acompañamiento completo — finalizado en 2 meses",
       complete_b1: "Todo lo incluido en Básico",
-      complete_b2: "Formularios pre-rellenados",
-      complete_b3: "Validación experta",
+      complete_b2: "Formularios pre-rellenados (cuando aplique)",
+      complete_b3: "Validación experta (humano en el circuito)",
       complete_b4: "Lista de elegibilidad para ayudas",
       complete_b5: "Soporte prioritario",
-      select_complete: "Elegir Completo"
+      select_complete: "Seleccionar Completo"
     }
   };
 
-  /* ============================
-     HELPERS
-  ============================ */
-
-  function getSessionId(){
-    let id = localStorage.getItem(SESSION_KEY);
-    if(!id){
-      id = crypto.randomUUID();
-      localStorage.setItem(SESSION_KEY, id);
-    }
-    return id;
-  }
-
-  function getLang(){
-    return localStorage.getItem(LANG_KEY) || "en";
-  }
-
-  async function supabaseInsertEvent(event_type, payload = {}){
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/sif_events`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SUPABASE_ANON_KEY,
-        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-        "Prefer": "return=minimal"
-      },
-      body: JSON.stringify({
-        session_id: getSessionId(),
-        event_type,
-        page: "packages",
-        lang: getLang(),
-        payload
-      })
-    });
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      console.warn("Supabase insert failed:", res.status, txt);
-    }
-  }
-
-  /* ============================
-     I18N
-  ============================ */
-
-  function t(key){
+  function applyTranslations() {
     const lang = getLang();
-    return (I18N[lang] && I18N[lang][key]) ? I18N[lang][key] : key;
-  }
-
-  function setLang(lang){
-    localStorage.setItem(LANG_KEY, lang);
-    applyLang();
-  }
-
-  function applyLang(){
-    const lang = getLang();
-
-    const enBtn = document.getElementById("langEn");
-    const esBtn = document.getElementById("langEs");
-    if (enBtn && esBtn) {
-      enBtn.classList.toggle("is-active", lang === "en");
-      esBtn.classList.toggle("is-active", lang === "es");
-    }
 
     document.querySelectorAll("[data-i18n]").forEach(el => {
-      el.textContent = t(el.getAttribute("data-i18n"));
+      const key = el.getAttribute("data-i18n");
+      if (I18N[lang] && I18N[lang][key]) el.textContent = I18N[lang][key];
     });
+
+    document.getElementById("langEn").classList.toggle("is-active", lang === "en");
+    document.getElementById("langEs").classList.toggle("is-active", lang === "es");
   }
 
-  /* ============================
-     PAGE ACTIONS
-  ============================ */
-
-  async function selectPackage(pkg){
-    localStorage.setItem(SELECTED_KEY, pkg);
-
-    await supabaseInsertEvent("phase2_package_selected", { selectedPackage: pkg });
-
-    window.location.href = "wtp.html";
+  function setLang(lang) {
+    localStorage.setItem(LANG_KEY, lang);
+    applyTranslations();
   }
 
-  // init
-  applyLang();
+  applyTranslations();
 </script>
 
 </body>
